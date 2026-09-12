@@ -1,0 +1,21 @@
+# utils
+numpy 
+pandas 
+
+# face regognition
+scikit-learn 
+dlib-bin    # for face detection 
+
+# embeddings - set of numbers that represent the features of a face
+# face regonition
+git+https://github.com/ageitgey/face_recognition_models
+
+setuptools<70.0.0
+
+supabase
+bcrypt
+
+segno   # for QR code generation
+pillow  # for image processing
+
+streamlit   # for web app development
