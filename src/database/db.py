@@ -1,0 +1,66 @@
+from src.database.config import supabase 
+import bcrypt
+
+def hash_pass(password):
+    hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    return hashed_password.decode()
+
+def check_pass(password, hashed_password):
+    return bcrypt.checkpw(password.encode(), hashed_password.encode())
+
+def check_teacher_exists(username):
+    response = supabase.table("teachers").select("username").eq("username", username).execute()
+    return bool(response.data)
+
+def create_teacher(username, password, name):
+    data = { "username": username, "password": hash_pass(password), "name": name}
+    response = supabase.table("teachers").insert(data).execute()
+    return response.data
+    
+def teacher_login(username, password):
+    response = supabase.table("teachers").select("*").eq("username", username).execute()
+    if response.data: 
+        teacher = response.data[0]
+        if check_pass(password, teacher["password"]):
+            return teacher
+    return None
+
+def get_all_students():
+    response = supabase.table("students").select("*").execute()
+    return response.data
+
+def create_student(new_name, face_embedding=None, voice_embedding=None):
+    data = {
+        'name': new_name, 
+        'face_embedding': face_embedding, 
+        'voice_embedding': voice_embedding
+    }
+    response = supabase.table('students').insert(data).execute()
+    return response.data
+    
+def create_subject(teacher_id, subject_code, subject_name, subject_section):
+    data = {
+        "subject_code": subject_code, 
+        "teacher_id": teacher_id, 
+        "name": subject_name, 
+        "section": subject_section
+    }
+    response = supabase.table('subjects').insert(data).execute()
+    return response.data
+
+def get_teacher_subjects(teacher_id):
+    response = supabase.table("subjects").select("*, subjects_student(count), attendance_logs(count)").eq("teacher_id", teacher_id).execute()
+    subjects = response.data 
+    for sub in subjects:
+        sub['total_students'] = sub.get("subjects_student", [{}])[0].get('count', 0) if sub.get('subjects_student') else 0
+        attendance = sub.get('attendance_logs', [])
+        if attendance[0]['count']:
+            unique_sessions = len(set(log['timestamp'] for log in attendance))
+        else:
+            unique_sessions = 0
+        sub['total_classes'] = unique_sessions
+
+        sub.pop("subjects_student", None)
+        sub.pop("attendance_logs", None)
+    
+    return subjects

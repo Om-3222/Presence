@@ -1,19 +1,19 @@
 import streamlit as st
 
-# background (deep navy) #0D3B66
-# text (cream) #FAF0CA
-# accent (orange) #EE964B
-# secondary highlight (golden yellow) #F4D35E
+# Primary #171717
+# Background #F5F1EA
+# Accent #C96A3D
+# Secondary #B9A58C
+# Soft #E5DDD2
+# White #FFFFFF
 
-with open("src/ui/style.css") as f:
-    css = f.read()
 
 def style_background_home():
     st.markdown(
         """
         <style>
             .stApp {
-                background-color: #F4D35E;
+                background-color: #F5F1EA;
             }
         </style>
         """
@@ -24,13 +24,15 @@ def style_background_dashboard():
         """
         <style>
             .stApp {
-                background-color: #F4D35E;
+                background-color: #F5F1EA;
             }
         </style>
         """
     , unsafe_allow_html=True)
 
 def style_base_layout():
+    with open("src/ui/style.css") as f:
+        css = f.read()
     st.markdown(
         f"""
         <style>

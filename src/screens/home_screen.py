@@ -11,15 +11,17 @@ def home_screen():
     header_home()
     col1, col2 = st.columns(2, gap="large")
     with col1:
-        st.header("I'm a Teacher")
-        st.image("https://res.cloudinary.com/mogsungf/image/upload/v1789292300/9e9d7a5a-6d19-471d-9919-2e2fffaba67d.png", width=150)
-        if st.button("Teacher Portal", icon=":material/arrow_outward:", icon_position="right"):
-            st.session_state['login_type'] = 'teacher'
-            st.rerun() 
+        with st.container(key='teacher_container'):
+            st.header("I'm a Teacher")
+            st.image("https://res.cloudinary.com/mogsungf/image/upload/v1789292300/9e9d7a5a-6d19-471d-9919-2e2fffaba67d.png", width=150)
+            if st.button("Teacher Portal", icon=":material/arrow_outward:", icon_position="right"):
+                st.session_state['login_type'] = 'teacher'
+                st.rerun() 
     with col2:
-        st.header("I'm a Student")
-        st.image("https://res.cloudinary.com/mogsungf/image/upload/v1789292051/b751f9d3-f6f6-449a-aeff-a677233ffad8.png", width=150)
-        if st.button("Student Portal", icon=":material/arrow_outward:", icon_position="right"):
-            st.session_state['login_type'] = 'student'
-            st.rerun() 
+        with st.container(key='student_container'):
+            st.header("I'm a Student")
+            st.image("https://res.cloudinary.com/mogsungf/image/upload/v1789292051/b751f9d3-f6f6-449a-aeff-a677233ffad8.png", width=150)
+            if st.button("Student Portal", icon=":material/arrow_outward:", icon_position="right"):
+                st.session_state['login_type'] = 'student'
+                st.rerun() 
     footer_home()
