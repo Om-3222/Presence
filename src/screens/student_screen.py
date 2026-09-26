@@ -1,6 +1,7 @@
+from src.components.subject_card import subject_card
+from src.database.db import get_student_subjects, get_student_attendance, get_all_students, create_student, unenroll_student_to_subject
 from src.pipelines.voice_pipeline import get_voice_embedding
 from src.pipelines.face_pipeline import get_face_embeddings, train_classifier
-from src.database.db import get_all_students, create_student
 from src.pipelines.face_pipeline import predict_attendance
 from src.components.footer import footer_home
 from src.components.header import header_dashboard
@@ -10,12 +11,80 @@ import numpy as np
 from PIL import Image
 import streamlit as st
 import time
+from src.components.dialog_enroll import enroll_dialog
 
 
 
 
 def student_dashboard():
-    st.header("STUDENT DASHBOARD")
+    student_data = st.session_state.student_data
+    student_id = student_data['student_id']
+
+    c1, c2 = st.columns(2, vertical_alignment='bottom', gap='xxlarge')
+    with c1:
+        header_dashboard()
+    with c2:
+        if st.button("Logout", key='loginbackbtn'):
+            st.session_state['is_logged_in'] = False
+            del st.session_state.student_data
+            st.rerun()
+    
+    st.header(f"Welcome, {student_data['name']}!", text_alignment="center")
+    st.divider()
+
+    c1, c2 = st.columns(2, vertical_alignment='bottom')
+    with c1:
+        st.header("Your Enrolled Subjects")
+    with c2:
+        if st.button("Enroll in a Subject", type='tertiary', width='stretch'):
+            enroll_dialog()
+
+    with st.spinner('Loading your subjects...'):
+        subjects = get_student_subjects(student_id)
+        logs = get_student_attendance(student_id)
+
+    stats_map = {}
+
+    for log in logs: 
+        sub_id = log['subject_id']
+
+        if sub_id not in stats_map:
+            stats_map[sub_id] = {'total': 0, 'attended': 0}
+        
+        stats_map[sub_id]['total'] += 1
+        if log['is_present']:
+            stats_map[sub_id]['attended'] += 1
+
+    cols = st.columns(2)
+    for i, sub_node in enumerate(subjects):
+        sub = sub_node['subjects']
+        sub_id = sub['subject_id']
+        
+        stats = stats_map.get(sub_id, {'total': 0, 'attended': 0})
+
+        def unenroll_btn():
+            if st.button('Unenroll from the course', type='tertiary', width='stretch', icon=':material/delete_forever:'):
+                unenroll_student_to_subject(student_id, sub_id)
+                st.toast('Unenrolled Successfully!')
+                time.sleep(1)
+                st.rerun()
+
+
+        with cols[i % 2]:
+            subject_card(
+                name = sub['name'], 
+                code = sub['subject_code'],
+                section = sub['section'], 
+                stats = [
+                    ('Total', stats['total']),
+                    ('Attended', stats['attended'])
+                ],
+                footer_callback=unenroll_btn
+            )
+        
+
+    footer_home()
+    
 
 def student_screen():
     show_registration_screen = False
@@ -27,11 +96,12 @@ def student_screen():
         student_dashboard()
         return
 
-    c1, c2 = st.columns(2, vertical_alignment='center', gap='xxlarge')
+    c1, c2 = st.columns(2, vertical_alignment='bottom', gap='xxlarge')
     with c1: 
         header_dashboard()
     with c2: 
         if st.button("Go back to home", key='loginbackbtn'):
+            st.query_params.clear()
             st.session_state['login_type'] = None
             st.rerun()
 
@@ -89,7 +159,7 @@ def student_screen():
             if st.button('Create Account'):
                 if new_name:
                     with st.spinner("Creating Profile..."):
-                        img = np.array(Image.open(photo_source))
+                        img = np.array(Image.open(photo_source).convert('RGB'))
                         encodings = get_face_embeddings(img)
                         if encodings:
                             face_emb = encodings[0].tolist()

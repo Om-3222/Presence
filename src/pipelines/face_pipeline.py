@@ -9,6 +9,7 @@ import dlib
 import numpy as np
 import face_recognition_models
 from sklearn.svm import SVC 
+from sklearn.calibration import CalibratedClassifierCV
 import streamlit as st 
 
 from src.database.db import get_all_students 
@@ -44,7 +45,21 @@ def load_dlib_models():
 def get_face_embeddings(image_np):
     detector, sp, facerec = load_dlib_models() 
 
-    faces = detector(image_np, 1) # 1 indicates upsample factor 
+    # Try detection with increasing upsample factors
+    faces = detector(image_np, 1)
+    # print(f"[face_pipeline] upsample=1 → faces detected: {len(faces)}")
+    
+    if len(faces) == 0:
+        faces = detector(image_np, 2)
+        # print(f"[face_pipeline] upsample=2 → faces detected: {len(faces)}")
+    
+    if len(faces) == 0:
+        # Try grayscale as a last resort
+        gray = np.mean(image_np, axis=2).astype(np.uint8) if image_np.ndim == 3 else image_np
+        faces = detector(gray, 2)
+        # print(f"[face_pipeline] grayscale upsample=2 → faces detected: {len(faces)}")
+        if len(faces) > 0:
+            image_np = image_np  # keep original RGB for embedding extraction
 
     encodings = [] 
 
@@ -78,7 +93,7 @@ def get_trained_model():
     if len(X) == 0:
         return None
 
-    clf = SVC(kernel='linear', probability=True, class_weight='balanced')
+    clf = CalibratedClassifierCV(SVC(), ensemble=False)
 
     try:
         clf.fit(X, y)
@@ -102,7 +117,7 @@ def train_classifier():
 # 4. if predicted value is < resemblence threshold then add to detected students dict
 def predict_attendance(class_image_np):
     encodings = get_face_embeddings(class_image_np)
-    
+    # print("encodings", encodings)
     detected_students = {}
 
     model_data = get_trained_model()

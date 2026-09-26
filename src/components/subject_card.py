@@ -22,7 +22,6 @@ def subject_card(name, code, section, stats=None, footer_callback=None):
     st.space()
     st.space()
     st.markdown(html, unsafe_allow_html=True)
-    st.space()
 
     if footer_callback:
         footer_callback()
