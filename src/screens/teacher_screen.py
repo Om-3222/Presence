@@ -1,6 +1,5 @@
 from src.components.dialog_voice_attendance import voice_attendance_dialog
 from src.components.dialog_attendance_results import attendance_results_dialog
-from pydantic._internal._utils import all_identical
 from datetime import datetime
 from src.database.config import supabase
 from src.pipelines.face_pipeline import predict_attendance
@@ -15,7 +14,7 @@ from src.ui.base_layout import style_background_dashboard, style_base_layout
 from src.components.header import header_dashboard
 import numpy as np
 import pandas as pd
-from src.database.db import check_teacher_exists, create_teacher, teacher_login, get_teacher_subjects
+from src.database.db import check_teacher_exists, create_teacher, teacher_login, get_teacher_subjects, get_attendance_for_teacher
 
 def teacher_screen():
     style_background_dashboard()
@@ -195,18 +194,18 @@ def teacher_tab_manage_subjects():
                 ("Students", sub['total_students']),
                 ("Classes", sub['total_classes'])
             ]
-        def share_btn():
-            if st.button(f"Share Code: {sub['name']}", key=f"share_{sub['subject_code']}", icon=":material/share:", type='tertiary'):
-                share_subject_dialog(sub['name'], sub['subject_code'])
-            st.space()
+            def share_btn():
+                if st.button(f"Share Code: {sub['name']}", key=f"share_{sub['subject_code']}", icon=":material/share:", type='tertiary'):
+                    share_subject_dialog(sub['name'], sub['subject_code'])
+                st.space()
 
-        subject_card(
-            name=sub['name'],
-            code=sub['subject_code'],
-            section=sub['section'],
-            stats=stats,
-            footer_callback=share_btn
-        )
+            subject_card(
+                name=sub['name'],
+                code=sub['subject_code'],
+                section=sub['section'],
+                stats=stats,
+                footer_callback=share_btn
+            )
     else:
         st.space()
         st.info("No subjects created yet, Create one above")
@@ -215,6 +214,47 @@ def teacher_tab_manage_subjects():
 
 def teacher_tab_attendance_records():
     st.header("Attendance Records")
+    st.space()
+    teacher_id = st.session_state.teacher_data['teacher_id']
+
+    records = get_attendance_for_teacher(teacher_id)
+
+    if not records: 
+        st.info("No records available")
+        return
+
+    data = []
+
+    for r in records:
+        ts = r.get('timestamp')
+
+        data.append({
+            "ts_group": ts.split('.')[0] if ts else None,
+            "Time": datetime.fromisoformat(ts).strftime("%Y-%m-%d %I:%M %p") if ts else "N/A",
+            "Subject": r['subjects']['name'],
+            "Subject Code": r['subjects']['subject_code'],
+            "is_present": bool(r['is_present'])
+        })
+
+    df = pd.DataFrame(data)
+
+    summary = (
+        df.groupby(['ts_group', "Time", "Subject", "Subject Code"]).agg(
+            Present_Count = ('is_present', 'sum'),
+            Total_Count = ('is_present', 'count')
+        ).reset_index()
+    )
+
+    summary['Attendance Stats'] = (
+        summary['Present_Count'].astype(str) + "/" + summary["Total_Count"].astype(str) + ' Students'
+    )
+
+    display_df = (summary.sort_values(by = 'ts_group', ascending=False)
+        [['Time','Subject','Subject Code', 'Attendance Stats']]
+        )
+
+    st.dataframe(display_df, width='stretch', hide_index=True)
+    
 
 
 
