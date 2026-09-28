@@ -24,7 +24,7 @@ def student_dashboard():
     with c1:
         header_dashboard()
     with c2:
-        if st.button("Logout", key='loginbackbtn'):
+        if st.button("Logout", key='loginbackbtn', icon=":material/logout:"):
             st.session_state['is_logged_in'] = False
             del st.session_state.student_data
             st.rerun()
@@ -112,7 +112,7 @@ def student_screen():
     
     photo_source = st.camera_input("Position your face in the center")
     if photo_source:
-        img = np.array(Image.open(photo_source))
+        img = np.array(Image.open(photo_source).convert('RGB'))
 
         with st.spinner("AI is scanning..."):
             detected, all_ids, num_faces = predict_attendance(img)
