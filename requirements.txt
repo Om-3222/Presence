@@ -1,5 +1,7 @@
+streamlit   # for web app development
+
 # utils
-numpy 
+numpy
 pandas 
 
 # face regognition
@@ -17,8 +19,6 @@ bcrypt
 
 segno   # for QR code generation
 pillow  # for image processing
-
-streamlit   # for web app development
 
 librosa # for audio processing 
 resemblyzer # for voice recognition (embeddings)

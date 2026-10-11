@@ -5,8 +5,8 @@
 #MainMenu,
 footer,
 header {
-    visibility: blank !important;
-    background: none !important;
+    visibility: hidden !important;
+    /* background: none !important; */
 }
 
 .block-container {
