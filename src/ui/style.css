@@ -212,3 +212,11 @@ input {
 .stToast {
     background-color: #FFFFFF !important;
 }
+
+[class*="_profilePreview"] {
+    display: hidden !important;
+}
+
+[class*="_profile"] {
+    display: hidden !important;
+}
