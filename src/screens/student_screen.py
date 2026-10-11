@@ -1,7 +1,8 @@
+from src.pipelines.face_pipeline import refresh_gallery
 from src.components.subject_card import subject_card
 from src.database.db import get_student_subjects, get_student_attendance, get_all_students, create_student, unenroll_student_to_subject
 from src.pipelines.voice_pipeline import get_voice_embedding
-from src.pipelines.face_pipeline import get_face_embeddings, train_classifier
+from src.pipelines.face_pipeline import get_face_embeddings
 from src.pipelines.face_pipeline import predict_attendance
 from src.components.footer import footer_home
 from src.components.header import header_dashboard
@@ -170,10 +171,9 @@ def student_screen():
                                 voice_emb = get_voice_embedding(audio_data.read())
 
                             response_data = create_student(new_name, face_embedding=face_emb, voice_embedding=voice_emb)
-                            print(response_data)
 
                             if response_data:
-                                train_classifier()
+                                refresh_gallery()
                                 st.session_state.is_logged_in = True
                                 st.session_state.user_role = 'student'
                                 st.session_state.student_data = response_data[0]
